@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Reading Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .stat {
+            font-size: 2em;
+            color: #2c5282;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>📚 My Reading Dashboard</h1>
+    
+    <div class="card">
+        <h2>2025 Reading Goal</h2>
+        {% if goal %}
+            <p class="stat">{{ progress }} / {{ goal }} books</p>
+            <p>{{ ((progress / goal) * 100)|round }}% complete</p>
+        {% else %}
+            <p>No goal set</p>
+        {% endif %}
+    </div>
+    
+    <div class="card">
+        <h2>Books Read This Year</h2>
+        <p class="stat">{{ books_read_count }}</p>
+    </div>
+    
+    <div class="card">
+        <h2>Currently Reading</h2>
+        {% if currently_reading %}
+            {% for user_book in currently_reading %}
+                <p><strong>{{ user_book.book.title }}</strong></p>
+                {% if user_book.book.contributions %}
+                    <p>by {{ user_book.book.contributions[0].author.name }}</p>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <p>Nothing currently reading</p>
+        {% endif %}
+    </div>
+</body>
+</html>

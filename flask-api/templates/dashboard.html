@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Reading Dashboard (API Version)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .stat {
+            font-size: 2em;
+            color: #2c5282;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .year-selector {
+            margin: 20px 0;
+        }
+        .year-selector button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .year-selector button.active {
+            background-color: #2c5282;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>📚 My Reading Dashboard (API Version)</h1>
+    
+    <div class="year-selector">
+        <button onclick="loadYear(2024)">2024</button>
+        <button onclick="loadYear(2025)" class="active">2025</button>
+    </div>
+    
+    <div id="loading" class="loading">Loading...</div>
+    <div id="dashboard" style="display: none;">
+        
+        <div class="card">
+            <h2><span id="year-label"></span> Reading Goal</h2>
+            <div id="goal-content"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Books Read <span id="period-label"></span></h2>
+            <p class="stat" id="books-read-count">0</p>
+        </div>
+        
+        <div class="card">
+            <h2>Currently Reading</h2>
+            <div id="currently-reading"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load data from the API
+        async function loadReadingData(startDate, endDate) {
+            try {
+                // Build the API URL with query parameters
+                let url = '/api/reading-stats/';
+                if (startDate) {
+                    url += `?start_date=${startDate}`;
+                    if (endDate) {
+                        url += `&end_date=${endDate}`;
+                    }
+                }
+                
+                // Fetch from the API (this is the key difference!)
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Update the DOM with the data
+                displayData(data);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loading').textContent = 'Error loading data';
+            }
+        }
+        
+        function displayData(data) {
+            // Hide loading, show dashboard
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Display goal
+            const goalDiv = document.getElementById('goal-content');
+            if (data.goal) {
+                goalDiv.innerHTML = `
+                    <p class="stat">${data.goal.progress} / ${data.goal.target} books</p>
+                    <p>${data.goal.percentage}% complete</p>
+                `;
+            } else {
+                goalDiv.innerHTML = '<p>No goal set for this period</p>';
+            }
+            
+            // Display books read count
+            document.getElementById('books-read-count').textContent = data.books_read_count;
+            
+            // Display currently reading
+            const currentlyReadingDiv = document.getElementById('currently-reading');
+            if (data.currently_reading && data.currently_reading.length > 0) {
+                currentlyReadingDiv.innerHTML = data.currently_reading.map(book => `
+                    <p><strong>${book.title}</strong><br>by ${book.author}</p>
+                `).join('');
+            } else {
+                currentlyReadingDiv.innerHTML = '<p>Nothing currently reading</p>';
+            }
+            
+            // Update labels
+            const startYear = data.date_range.start.split('-')[0];
+            const endYear = data.date_range.end.split('-')[0];
+            const yearLabel = startYear === endYear ? startYear : `${startYear}-${endYear}`;
+
+            document.getElementById('year-label').textContent = yearLabel;
+            document.getElementById('period-label').textContent = `in ${yearLabel}`;
+        }
+        
+        function loadYear(year) {
+            // Update button states
+            document.querySelectorAll('.year-selector button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            
+            // Load data for the year
+            loadReadingData(`${year}-01-01`, `${year}-12-31`);
+        }
+        
+        // Load current year on page load
+        loadReadingData();
+    </script>
+</body>
+</html>
